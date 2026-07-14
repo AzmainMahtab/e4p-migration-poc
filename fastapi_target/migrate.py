@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """Migrate the Elite4Print slice from the legacy DB to the fast-kit target DB.
 
-Run from /home/odin/repo/e4p-migration-poc with fast-kit's virtual environment
+Run from the e4p-migration-poc directory with fast-kit's virtual environment
 activated (asyncpg is the only third-party dependency):
 
-    cd /home/odin/repo/e4p-migration-poc
-    source /home/odin/repo/fast-kit/.venv/bin/activate
+    cd e4p-migration-poc
+    source ../fast-kit/.venv/bin/activate
     python fastapi_target/migrate.py
 
 Or use the venv interpreter directly:
 
-    /home/odin/repo/fast-kit/.venv/bin/python fastapi_target/migrate.py
+    ../fast-kit/.venv/bin/python fastapi_target/migrate.py
+
+Environment variables:
+    E4P_SOURCE_DSN  - legacy PostgreSQL DSN (default: localhost:5433/e4p_legacy)
+    E4P_TARGET_DSN  - fast-kit PostgreSQL DSN (default: localhost:5435/e4p_fastapi)
 
 The script preserves legacy integer IDs where the target schema allows it.
 """
