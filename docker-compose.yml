@@ -1,0 +1,55 @@
+services:
+  legacy_db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: e4p_legacy
+      POSTGRES_USER: e4p
+      POSTGRES_PASSWORD: e4p
+    ports:
+      - "5433:5432"
+    volumes:
+      - legacy_pgdata:/var/lib/postgresql/data
+      - ./legacy_source/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./legacy_source/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e4p -d e4p_legacy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  django_target_db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: e4p_django
+      POSTGRES_USER: e4p
+      POSTGRES_PASSWORD: e4p
+    ports:
+      - "5434:5432"
+    volumes:
+      - django_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e4p -d e4p_django"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  fastapi_target_db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: e4p_fastapi
+      POSTGRES_USER: e4p
+      POSTGRES_PASSWORD: e4p
+    ports:
+      - "5435:5432"
+    volumes:
+      - fastapi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e4p -d e4p_fastapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  legacy_pgdata:
+  django_pgdata:
+  fastapi_pgdata:
