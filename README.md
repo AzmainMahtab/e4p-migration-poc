@@ -64,14 +64,16 @@ workspace/
 
 ### 1. Clone the three repositories side by side
 
+> **Important:** the POC changes in `django-init` and `fast-kit` live on the branch `poc/e4p-migration-comparison`, not on `main`. Clone that branch directly.
+
 ```bash
 mkdir elite4print-rebuild && cd elite4print-rebuild
 git clone https://github.com/AzmainMahtab/e4p-migration-poc.git
-git clone https://github.com/AzmainMahtab/django-kit.git django-init
-git clone https://github.com/AzmainMahtab/fast-kit.git
+git clone --branch poc/e4p-migration-comparison https://github.com/AzmainMahtab/django-kit.git django-init
+git clone --branch poc/e4p-migration-comparison https://github.com/AzmainMahtab/fast-kit.git
 ```
 
-### 2. Check out the POC branches in both boilerplates
+If you already cloned without the branch flag, switch branches:
 
 ```bash
 cd django-init && git checkout poc/e4p-migration-comparison && cd ..
