@@ -1,7 +1,7 @@
 # Elite4Print Rebuild: Migration & Admin Proof-of-Concept Methodology
 
 ## Goal
-Give the team empirical, side-by-side data to decide between `fast-kit` (FastAPI) and `django-init` (Django) for rebuilding Elite4Print.
+Give the team empirical, side-by-side data to decide between `fast-kit` (FastAPI) and `django-kit` (Django) for rebuilding Elite4Print.
 
 ## Scope (the slice Murad defined)
 
@@ -38,7 +38,7 @@ Give the team empirical, side-by-side data to decide between `fast-kit` (FastAPI
 This directory contains:
 
 - `legacy_source/` — Minimal Django project that recreates the Elite4Print slice schema and seeds representative data.
-- `django_target/` — Extension of `django-init` with product/payment/coupon modules and a management command to migrate from the legacy DB.
+- `django_target/` — Extension of `django-kit` with product/payment/coupon modules and a management command to migrate from the legacy DB.
 - `fastapi_target/` — Extension of `fast-kit` with product/payment/coupon modules and a script to migrate from the legacy DB.
 - `reconcile/` — Shared reconciliation scripts that compare source and target financials, row counts, and referential integrity.
 - `docker-compose.yml` — PostgreSQL source and target databases.

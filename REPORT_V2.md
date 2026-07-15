@@ -178,7 +178,7 @@ The dump file is at `backups/e4p_dev_from_prod_real.dump` and is tracked in the 
 
 - `backups/e4p_dev_from_prod_real.dump` — full dev DB dump
 - `fastapi_target/migrate.py` — updated FastAPI bulk migration script
-- `django-init/backend/apps/ordering/management/commands/migrate_e4p_slice.py` — updated Django bulk migration command
+- `django-kit/backend/apps/ordering/management/commands/migrate_e4p_slice.py` — updated Django bulk migration command
 - `reconcile/reconcile.py` — updated reconciliation script (includes `coupon_products`)
 - `Makefile` — added `restore-real` target
 

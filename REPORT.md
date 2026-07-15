@@ -1,4 +1,4 @@
-# Elite4Print Rebuild: fast-kit vs django-init Proof-of-Concept Report
+# Elite4Print Rebuild: fast-kit vs django-kit Proof-of-Concept Report
 
 ## Executive Summary
 
@@ -18,7 +18,7 @@ The key finding is that **the migration itself is not the differentiator**. Both
 - 100 orders, 194 order items, 32 memos, 89 payments, 10 pending refunds, 10 coupons, 30 usages, 20 products, 5 categories, 10 users.
 - One month date window (June 2026).
 
-### Django target (`django-init`)
+### Django target (`django-kit`)
 
 - New apps: `catalog`, `payment`, `promotion`.
 - Extended `ordering` app with Elite4Print financial and production fields.
@@ -48,7 +48,7 @@ cd /home/odin/repo/e4p-migration-poc
 docker compose up -d
 
 # 2. Migrate Django target
-cd /home/odin/repo/django-init
+cd /home/odin/repo/django-kit
 source .venv/bin/activate
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
   python backend/manage.py migrate
@@ -64,7 +64,7 @@ cd /home/odin/repo/e4p-migration-poc
 PYTHONPATH=/home/odin/repo/fast-kit python fastapi_target/migrate.py
 
 # 4. Reconcile
-source /home/odin/repo/django-init/.venv/bin/activate
+source /home/odin/repo/django-kit/.venv/bin/activate
 python reconcile/reconcile.py
 ```
 
@@ -114,7 +114,7 @@ Note on payments: the legacy schema stores `amount` as `DOUBLE PRECISION`; the s
 
 ## Lines of Code
 
-| Component | django-init | fast-kit |
+| Component | django-kit | fast-kit |
 |-----------|-------------|----------|
 | New target models + migrations + admin | ~832 LOC | ~622 LOC |
 | Migration script (reads legacy, writes target) | ~324 LOC | ~604 LOC |
@@ -130,7 +130,7 @@ Observations:
 
 ### Django
 
-`django-init` admin was configured for Product and Order (with inlined Jobs/Memos) and the rest of the slice. Verified:
+`django-kit` admin was configured for Product and Order (with inlined Jobs/Memos) and the rest of the slice. Verified:
 
 - `python manage.py check` passes.
 - Models registered: `Product`, `ProductCategory`, `Order`, `Job`, `JobMemo`, `Payment`, `PendingRefund`, `Coupon`, `CouponUsage`.
@@ -145,26 +145,26 @@ FastAPI has no built-in admin. See `FASTAPI_ADMIN.md` for the honest options and
 
 Using the methodology in `METHODOLOGY.md`:
 
-| # | Criterion | Weight | django-init score | fast-kit score | Notes |
+| # | Criterion | Weight | django-kit score | fast-kit score | Notes |
 |---|-----------|--------|-------------------|----------------|-------|
 | 1 | Migration fit against real data | 25% | 5 | 4 | Both reconcile perfectly; Django has a small edge because it can introspect the legacy schema with the same ORM. |
 | 2 | Admin back-office out of the box | 20% | 5 | 2 | Django admin works today; FastAPI needs 2–4 weeks of frontend work. |
-| 3 | Boundary enforcement / loose coupling | 20% | 3 | 5 | django-init still has the global registry; FastAPI is explicit and DI-based. |
+| 3 | Boundary enforcement / loose coupling | 20% | 3 | 5 | django-kit still has the global registry; FastAPI is explicit and DI-based. |
 | 4 | Testability & in-memory tests | 10% | 3 | 5 | FastAPI's pure domain + in-memory repos make unit tests trivial. |
 | 5 | Lines of code for same slice | 10% | 4 | 3 | Django is shorter for models/admin; FastAPI is longer but more explicit. |
-| 6 | Operational stack simplicity | 10% | 3 | 4 | NATS plan is cleaner, but Celery is already wired in django-init. |
+| 6 | Operational stack simplicity | 10% | 3 | 4 | NATS plan is cleaner, but Celery is already wired in django-kit. |
 | 7 | LLM-assisted development speed | 5% | 3 | 5 | FastAPI is more readable/traceable for an LLM. |
 
 **Weighted totals:**
 
-- django-init: `5*0.25 + 5*0.20 + 3*0.20 + 3*0.10 + 4*0.10 + 3*0.10 + 3*0.05 = 4.10`
+- django-kit: `5*0.25 + 5*0.20 + 3*0.20 + 3*0.10 + 4*0.10 + 3*0.10 + 3*0.05 = 4.10`
 - fast-kit: `4*0.25 + 2*0.20 + 5*0.20 + 5*0.10 + 3*0.10 + 4*0.10 + 5*0.05 = 3.85`
 
 The POC puts them within ~6% of each other, with Django ahead primarily because of admin and migration familiarity.
 
 ## Key Risks
 
-### If you choose django-init
+### If you choose django-kit
 
 - The global `use_case_registry` and ORM-bound domain are real coupling risks that will worsen as the 14 bounded contexts grow.
 - The repository abstraction in the current boilerplate undermines the "admin works for free" argument. The POC avoided this by using ORM models directly in apps.
@@ -180,11 +180,11 @@ The POC puts them within ~6% of each other, with Django ahead primarily because 
 
 The decision depends on which risk your team wants to own:
 
-- **Choose django-init** if the priority is shipping the rebuild quickly with a working admin and the team is confident it can enforce boundaries through discipline + import-linter. The migration risk is low and the admin is already there.
+- **Choose django-kit** if the priority is shipping the rebuild quickly with a working admin and the team is confident it can enforce boundaries through discipline + import-linter. The migration risk is low and the admin is already there.
 - **Choose fast-kit** if the priority is avoiding the long-term coupling trap that made the current Elite4Print backend hard to change, and you are willing to invest in a headless admin and NATS operational work now.
 
 If the team is split, a pragmatic compromise is:
-1. Keep django-init for the initial cutover (migration + admin are lower risk).
+1. Keep django-kit for the initial cutover (migration + admin are lower risk).
 2. Run a parallel workstream to replace the global registry with constructor injection, drop the repository abstraction where it adds no value, and expand import-linter contracts.
 3. Re-evaluate FastAPI for extracted services when the franchise split becomes real rather than hypothetical.
 
@@ -199,11 +199,11 @@ If the team is split, a pragmatic compromise is:
 - `e4p-migration-poc/fastapi_target/migrate.py`
 - `e4p-migration-poc/FASTAPI_ADMIN.md`
 - `e4p-migration-poc/REPORT.md`
-- `django-init/backend/apps/catalog/` (new app)
-- `django-init/backend/apps/payment/` (new app)
-- `django-init/backend/apps/promotion/` (new app)
-- `django-init/backend/apps/ordering/management/commands/migrate_e4p_slice.py`
-- `django-init/backend/apps/ordering/migrations/0002_*.py`
+- `django-kit/backend/apps/catalog/` (new app)
+- `django-kit/backend/apps/payment/` (new app)
+- `django-kit/backend/apps/promotion/` (new app)
+- `django-kit/backend/apps/ordering/management/commands/migrate_e4p_slice.py`
+- `django-kit/backend/apps/ordering/migrations/0002_*.py`
 - `fast-kit/app/modules/catalog/` (new module)
 - `fast-kit/app/modules/payment/` (new module)
 - `fast-kit/app/modules/promotion/` (new module)
