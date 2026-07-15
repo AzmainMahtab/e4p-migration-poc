@@ -80,14 +80,16 @@ cd django-init && git checkout poc/e4p-migration-comparison && cd ..
 cd fast-kit && git checkout poc/e4p-migration-comparison && cd ..
 ```
 
-### 3. Set up the boilerplate virtual environments
+### 2. Set up the boilerplate virtual environments
 
-Follow each repo's own README, or run the equivalent of:
+Both boilerplates use **[uv](https://docs.astral.sh/uv/)** for reproducible dependency management. Make sure `uv` is installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`), then run:
 
 ```bash
-cd django-init && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ..
-cd fast-kit && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ..
+cd django-init && uv sync && cd ..
+cd fast-kit && uv sync && cd ..
 ```
+
+This creates `.venv/` in each repo and installs the exact locked versions from their `uv.lock` files. The locks include binary wheels where available (e.g. `psycopg[binary]`, `asyncpg`), so no system PostgreSQL development libraries are required.
 
 > The commands below assume the recommended directory structure. If you cloned to different paths, replace `../django-init` and `../fast-kit` accordingly.
 
@@ -136,47 +138,38 @@ docker compose down -v && docker compose up -d
 
 ```bash
 cd ../django-init
-source .venv/bin/activate
 
 # Apply migrations
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
   POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-  python backend/manage.py migrate
+  uv run python backend/manage.py migrate
 
 # Migrate the Elite4Print slice
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
   POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
   LEGACY_DATABASE_URL=postgresql://e4p:e4p@localhost:5433/e4p_legacy \
-  python backend/manage.py migrate_e4p_slice
+  uv run python backend/manage.py migrate_e4p_slice
 ```
 
 ### 5. Migrate the FastAPI target
 
 ```bash
 cd ../fast-kit
-source .venv/bin/activate
 
 # Apply Alembic migrations
 DATABASE_URL=postgresql+asyncpg://e4p:e4p@localhost:5435/e4p_fastapi \
-  alembic upgrade head
+  uv run alembic upgrade head
 
 # Run the migration script
 cd ../e4p-migration-poc
-python fastapi_target/migrate.py
-```
-
-`migrate.py` uses `asyncpg`, which is installed in fast-kit's virtual environment. If you prefer, you can also run it with the venv interpreter directly:
-
-```bash
-../fast-kit/.venv/bin/python fastapi_target/migrate.py
+uv run --project ../fast-kit python fastapi_target/migrate.py
 ```
 
 ### 6. Reconcile
 
 ```bash
 cd ../e4p-migration-poc
-source ../django-init/.venv/bin/activate
-python reconcile/reconcile.py
+uv run --project ../django-init python reconcile/reconcile.py
 ```
 
 Expected output: `RESULT: ALL CHECKS PASS` with matching row counts and financial totals.
@@ -212,12 +205,11 @@ The django-init POC registers admin classes for the slice.
 
 ```bash
 cd ../django-init
-source .venv/bin/activate
 
 # Promote an existing migrated user to superuser
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
   POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-  python backend/manage.py shell -c "
+  uv run python backend/manage.py shell -c "
 from backend.apps.identity.domain.models import User
 u = User.objects.get(id=1)
 u.is_superuser = True
@@ -230,7 +222,7 @@ print('superuser set')
 # Verify admin registration
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
   POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-  python backend/manage.py check
+  uv run python backend/manage.py check
 ```
 
 Then run the dev server:
@@ -238,7 +230,7 @@ Then run the dev server:
 ```bash
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
   POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-  python backend/manage.py runserver
+  uv run python backend/manage.py runserver
 ```
 
 Visit `http://localhost:8000/admin/` and log in with the superuser credentials you just set.
@@ -279,20 +271,20 @@ If `5433`, `5434`, or `5435` are taken, edit `docker-compose.yml` to map differe
 
 ### `psycopg` or `asyncpg` not found
 
-Use the boilerplate virtual environments:
+Make sure both boilerplate environments are synced with uv:
 
 ```bash
-source ../django-init/.venv/bin/activate   # for reconcile.py
-source ../fast-kit/.venv/bin/activate      # for fastapi_target/migrate.py
+cd ../django-init && uv sync   # provides psycopg[binary] for reconcile.py
+cd ../fast-kit && uv sync      # provides asyncpg for fastapi_target/migrate.py
 ```
 
 ### Django migration complains about missing dependencies
 
-Make sure you are on the `poc/e4p-migration-comparison` branch in `django-init` and have run `pip install -r requirements.txt`.
+Make sure you are on the `poc/e4p-migration-comparison` branch in `django-init` and have run `uv sync`.
 
 ### FastAPI Alembic migration fails
 
-Make sure you are on the `poc/e4p-migration-comparison` branch in `fast-kit` and that `DATABASE_URL` points to the target DB on port `5435`.
+Make sure you are on the `poc/e4p-migration-comparison` branch in `fast-kit`, have run `uv sync`, and that `DATABASE_URL` points to the target DB on port `5435`.
 
 ## Stopping / resetting
 

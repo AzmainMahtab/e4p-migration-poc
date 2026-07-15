@@ -37,28 +37,28 @@ seed:
 	python legacy_source/generate_seed.py
 
 migrate-dj:
-	cd ../django-init && source .venv/bin/activate && \
+	cd ../django-init && \
 	POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
 	POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-	python backend/manage.py migrate && \
+	uv run python backend/manage.py migrate && \
 	POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
 	POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
 	LEGACY_DATABASE_URL=postgresql://e4p:e4p@localhost:5433/e4p_legacy \
-	python backend/manage.py migrate_e4p_slice
+	uv run python backend/manage.py migrate_e4p_slice
 
 migrate-fa:
-	cd ../fast-kit && source .venv/bin/activate && \
+	cd ../fast-kit && \
 	DATABASE_URL=postgresql+asyncpg://e4p:e4p@localhost:5435/e4p_fastapi \
-	alembic upgrade head && \
+	uv run alembic upgrade head && \
 	cd ../e4p-migration-poc && \
-	../fast-kit/.venv/bin/python fastapi_target/migrate.py
+	uv run --project ../fast-kit python fastapi_target/migrate.py
 
 reconcile:
-	source ../django-init/.venv/bin/activate && \
-	python reconcile/reconcile.py
+	cd ../e4p-migration-poc && \
+	uv run --project ../django-init python reconcile/reconcile.py
 
 admin-check:
-	cd ../django-init && source .venv/bin/activate && \
+	cd ../django-init && \
 	POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
 	POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
-	python backend/manage.py check
+	uv run python backend/manage.py check
