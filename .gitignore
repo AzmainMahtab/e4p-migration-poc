@@ -24,7 +24,3 @@ venv/
 # Docker Compose runtime data (volumes are external)
 *.log
 
-# Real database backups (large files; restore from shared storage instead)
-backups/*.dump
-backups/*.sql
-backups/*.gz
