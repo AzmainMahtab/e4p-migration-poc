@@ -19,7 +19,7 @@ The first POC used a hand-written `schema.sql` + `seed.sql` with ~100 orders. Th
 | Users | 10 | 13,624 |
 | Source | synthetic | `e4p_dev_from_prod` dump |
 
-The dump file is stored in `backups/e4p_dev_from_prod_real.dump` (gitignored) and restored into the local `legacy_db` container with `make restore-real`.
+The dump file is stored in `backups/e4p_dev_from_prod_real.dump` (tracked in git) and restored into the local `legacy_db` container with `make restore-real`.
 
 ---
 
@@ -92,11 +92,11 @@ The row counts are too large for row-by-row `INSERT` or `update_or_create`. Both
 ## 4. Performance comparison
 
 | Kit | Total rows migrated | Elapsed time |
-|---|---:|---:|
-| Django | 653,422 | 59.2 s |
-| FastAPI | 653,422 | 22.25 s |
+|---|---|---:|
+| Django | 653,422 | ~61 s |
+| FastAPI | 653,422 | ~26 s |
 
-FastAPI is roughly **2.6x faster** for the bulk load, largely because `asyncpg.executemany` and disabling FK triggers are very efficient for this shape. Django is still comfortably fast for a one-off migration.
+FastAPI is roughly **2.3–2.6x faster** for the bulk load, largely because `asyncpg.executemany` and disabling FK triggers are very efficient for this shape. Django is still comfortably fast for a one-off migration.
 
 ---
 
@@ -170,7 +170,7 @@ make migrate-dj
 make reconcile
 ```
 
-The dump file is at `backups/e4p_dev_from_prod_real.dump` and is gitignored.
+The dump file is at `backups/e4p_dev_from_prod_real.dump` and is tracked in the repo.
 
 ---
 
