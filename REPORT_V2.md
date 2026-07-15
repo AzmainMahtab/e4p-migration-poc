@@ -87,6 +87,37 @@ The row counts are too large for row-by-row `INSERT` or `update_or_create`. Both
 
 **Reconciliation output:** `RESULT: ALL CHECKS PASS`
 
+### 3.4 Model vs. real-data consistency verdict
+
+We compared the source legacy schema against the django-kit and fast-kit target models to confirm the migrated data actually fits.
+
+**Field coverage:** both targets cover every field imported by the migration scripts. The following legacy fields were intentionally omitted because they are not needed for the slice:
+
+- `product_management_productcategory`: `category_code`, `thumbnail`, `created_by_id`, `parent_id`, `is_active`, `description`
+- `product_management_product`: `thumbnail`, `large_format_production_method`
+- `order_management_orderitems`: `json_file`, `round_corner_selection`, `catalog_base_price`
+- `payment_management_pendingrefund`: `order_item_id`
+
+**Data-shape checks:** the real data fits the target column widths and types:
+
+| Field | Source max | Target width | Result |
+|---|---|---|---|
+| `order_id` / `order_number` | 15 chars | 32 chars | fits |
+| `job_id` | 15 chars | 32 chars | fits |
+| `username` | 36 chars | 50 chars (fast-kit) / 150 chars (django-kit) | fits |
+| `email` | 53 chars | 255 chars | fits |
+| `phone_number` | 31 chars | 32 chars (django-kit) / generated 20-char (fast-kit) | fits |
+| `product_id` / `product_code` | 13 chars | 255 chars | fits |
+| `coupon_code` | 13 chars | 50 chars | fits |
+
+**Nullability:** all source rows provide the non-null values the targets require (`orders.user_id`, `products.created_by_id`, `coupon_usages.user_id`, etc.). Nullable source columns that are mostly null (e.g. `orderitems.product_id` has 329,879 nulls, `pendingrefund.order_item_id` has 234 nulls) map to nullable target columns.
+
+**Known truncation:** `order_management_orderitemmemo.note` is unbounded in the source; the longest value is 318 characters. Both targets store it as `varchar(255)`, and the migration scripts truncate on import. This is the only data-shape loss in the slice, and it does not affect reconciliation.
+
+**UUID bridge pattern:** the real `authentications_user.id` is `uuid`. Both targets keep an internal integer PK and store the legacy UUID in `users.legacy_id`. All user-facing FKs in the slice (`orders.user_id`, `products.created_by_id`, `payments.user_id`, `coupon_usages.user_id`) reference `users.legacy_id`, preserving the original relationships exactly.
+
+**Verdict:** both django-kit and fast-kit models are sufficient to accommodate the real migrated data. The reconciliation passes, and the only intentional data loss is the `note` truncation described above.
+
 ---
 
 ## 4. Performance comparison
