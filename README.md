@@ -255,6 +255,52 @@ Visit `http://localhost:8000/admin/` and log in with the superuser credentials y
 
 Registered admin models: `Product`, `ProductCategory`, `Order`, `Job`, `JobMemo`, `Payment`, `PendingRefund`, `Coupon`, `CouponUsage`.
 
+## Verifying fast-kit endpoints
+
+The fast-kit app can serve the migrated data over HTTP. Redis is required for authentication caching.
+
+```bash
+# 1. Start Redis
+docker run -d --name fast-kit-redis -p 6379:6379 redis:7-alpine
+
+# 2. Start the fast-kit dev server
+cd ../fast-kit
+POSTGRES_HOST=localhost \
+POSTGRES_USER=e4p \
+POSTGRES_PASSWORD=e4p \
+POSTGRES_DB=e4p_fastapi \
+POSTGRES_PORT=5435 \
+REDIS_URL=redis://localhost:6379/0 \
+JWT_SECRET_KEY=ctR7DTM3jeamaiioWRISZ5TKCYQYdEi9xM49MLqSLf_UFesPhpE8hcAv4cbkShdu \
+ENVIRONMENT=local \
+FIRST_SUPERUSER_EMAIL=super@example.com \
+FIRST_SUPERUSER_PASSWORD=SecurePass123! \
+FIRST_SUPERUSER_USERNAME=fastkit_admin \
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+In another terminal:
+
+```bash
+# Health / DB connectivity
+curl -s http://localhost:8000/health | python -m json.tool
+
+# Public migrated orders list
+curl -s "http://localhost:8000/api/v1/orders?limit=2" | python -m json.tool
+
+# Authenticate as the seeded superuser
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"super@example.com","password":"SecurePass123!"}' | \
+  python -c "import sys,json; print(json.load(sys.stdin)['data']['access_token'])")
+
+# Read a migrated user
+curl -s http://localhost:8000/api/v1/users/by-username/admin \
+  -H "Authorization: Bearer $TOKEN" | python -m json.tool
+```
+
+> **Note:** setting `FIRST_SUPERUSER_EMAIL`/`FIRST_SUPERUSER_PASSWORD` creates one extra user in the fast-kit target DB. If you plan to run `make reconcile` afterward, re-run `make migrate-fa` first to reset the target tables to the migrated snapshot.
+
 ## Evaluating the results
 
 Read the detailed reports:
