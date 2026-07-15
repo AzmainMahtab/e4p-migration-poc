@@ -53,8 +53,7 @@ workspace/
 ## Prerequisites
 
 - Docker + Docker Compose
-- Python 3.13+
-- `psycopg` and `asyncpg` (installed in the boilerplate virtual environments)
+- **[uv](https://docs.astral.sh/uv/)** package manager (installs the right Python version automatically)
 - Access to the three repositories:
   - `https://github.com/AzmainMahtab/e4p-migration-poc.git`
   - `https://github.com/AzmainMahtab/django-kit.git`
@@ -80,9 +79,26 @@ cd django-init && git checkout poc/e4p-migration-comparison && cd ..
 cd fast-kit && git checkout poc/e4p-migration-comparison && cd ..
 ```
 
-### 2. Set up the boilerplate virtual environments
+### 2. Install uv
 
-Both boilerplates use **[uv](https://docs.astral.sh/uv/)** for reproducible dependency management. Make sure `uv` is installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`), then run:
+Both boilerplates use **[uv](https://docs.astral.sh/uv/)** for reproducible dependency management. If you don't have it yet, install it:
+
+**macOS / Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Then verify:
+```bash
+uv --version
+```
+
+### 3. Set up the boilerplate virtual environments
 
 ```bash
 cd django-init && uv sync && cd ..
@@ -96,6 +112,8 @@ This creates `.venv/` in each repo and installs the exact locked versions from t
 ## Quick start
 
 All commands below are run from inside `e4p-migration-poc/`.
+
+> **Dockerization note:** the three PostgreSQL databases are Dockerized via `docker-compose.yml`. The migration and reconciliation scripts run on the host using `uv` (they connect to the exposed container ports `5433`, `5434`, and `5435`).
 
 ### 1. Start the databases
 
