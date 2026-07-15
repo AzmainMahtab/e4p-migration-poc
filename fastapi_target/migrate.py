@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -137,7 +137,10 @@ async def _migrate_users(source: asyncpg.Connection, target: asyncpg.Connection)
         # Source phone numbers are not unique, but fast-kit requires uniqueness.
         # Generate a deterministic, unique phone number from the legacy UUID.
         username = (r["username"] or r["email"])[:50]
-        phone = f"+1{user_id.hex[:18]}"
+        # Source phone numbers are not unique, but fast-kit requires uniqueness.
+        # Generate a deterministic, unique E.164 phone number from the legacy UUID.
+        # E.164 format: +[1-9] followed by up to 14 digits (max 15 chars total).
+        phone = f"+1{user_id.int % 10_000_000_000_000:014d}"
         status = "active" if r["is_active"] else "pending_verification"
         values.append(
             (
