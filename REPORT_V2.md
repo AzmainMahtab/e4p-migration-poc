@@ -118,7 +118,7 @@ The Django script is shorter because Django ORM `bulk_create` handles batching, 
 | Preserve UUID users | Add `legacy_id` to `User`; change `user_id` fields to `UUIDField` | Add `legacy_id` to `UserModel`; change FK columns to `UUID` |
 | Bulk load | `bulk_create(batch_size=5000)` | `asyncpg.executemany` + chunking |
 | Coupon-product M2M | Added `CouponProduct` model | Already existed |
-| Run time | 59.2 s | 22.25 s |
+| Run time | ~61 s | ~26 s |
 
 ---
 
