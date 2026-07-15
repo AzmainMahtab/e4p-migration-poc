@@ -3,7 +3,7 @@
 A reproducible, side-by-side proof-of-concept for rebuilding the Elite4Print backend. It migrates the same real-world data slice into two boilerplates and reconciles the results.
 
 - **fast-kit** — FastAPI + SQLAlchemy + Alembic (clean architecture / modular monolith)
-- **django-init** — Django + DRF + Celery (modular monolith)
+- **django-kit** — Django + DRF + Celery (modular monolith)
 
 The slice covers: orders, order items, job memos, payments, pending refunds, coupons, products, and categories.
 
@@ -45,7 +45,7 @@ This harness is designed to sit next to the two boilerplate repos:
 
 ```
 workspace/
-├── django-init/                    # branch: poc/e4p-migration-comparison
+├── django-kit/                     # branch: poc/e4p-migration-comparison
 ├── fast-kit/                       # branch: poc/e4p-migration-comparison
 └── e4p-migration-poc/              # this repo
 ```
@@ -63,19 +63,19 @@ workspace/
 
 ### 1. Clone the three repositories side by side
 
-> **Important:** the POC changes in `django-init` and `fast-kit` live on the branch `poc/e4p-migration-comparison`, not on `main`. Clone that branch directly.
+> **Important:** the POC changes in `django-kit` and `fast-kit` live on the branch `poc/e4p-migration-comparison`, not on `main`. Clone that branch directly.
 
 ```bash
 mkdir elite4print-rebuild && cd elite4print-rebuild
 git clone https://github.com/AzmainMahtab/e4p-migration-poc.git
-git clone --branch poc/e4p-migration-comparison https://github.com/AzmainMahtab/django-kit.git django-init
+git clone --branch poc/e4p-migration-comparison https://github.com/AzmainMahtab/django-kit.git
 git clone --branch poc/e4p-migration-comparison https://github.com/AzmainMahtab/fast-kit.git
 ```
 
 If you already cloned without the branch flag, switch branches:
 
 ```bash
-cd django-init && git checkout poc/e4p-migration-comparison && cd ..
+cd django-kit && git checkout poc/e4p-migration-comparison && cd ..
 cd fast-kit && git checkout poc/e4p-migration-comparison && cd ..
 ```
 
@@ -101,13 +101,13 @@ uv --version
 ### 3. Set up the boilerplate virtual environments
 
 ```bash
-cd django-init && uv sync && cd ..
+cd django-kit && uv sync && cd ..
 cd fast-kit && uv sync && cd ..
 ```
 
 This creates `.venv/` in each repo and installs the exact locked versions from their `uv.lock` files. The locks include binary wheels where available (e.g. `psycopg[binary]`, `asyncpg`), so no system PostgreSQL development libraries are required.
 
-> The commands below assume the recommended directory structure. If you cloned to different paths, replace `../django-init` and `../fast-kit` accordingly.
+> The commands below assume the recommended directory structure. If you cloned to different paths, replace `../django-kit` and `../fast-kit` accordingly.
 
 ## Quick start
 
@@ -127,7 +127,7 @@ This starts three PostgreSQL containers on localhost:
 | Service | Port | Database | Purpose |
 |---------|------|----------|---------|
 | `legacy_db` | `5433` | `e4p_legacy` | Source data |
-| `django_target_db` | `5434` | `e4p_django` | django-init target |
+| `django_target_db` | `5434` | `e4p_django` | django-kit target |
 | `fastapi_target_db` | `5435` | `e4p_fastapi` | fast-kit target |
 
 The legacy DB starts empty. For the real-data workflow, restore the bundled dump next. For the old synthetic workflow, use `legacy_source/schema.sql` + `seed.sql` instead.
@@ -155,7 +155,7 @@ docker compose down -v && docker compose up -d
 ### 4. Migrate the Django target
 
 ```bash
-cd ../django-init
+cd ../django-kit
 
 # Apply migrations
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
@@ -187,7 +187,7 @@ uv run --project ../fast-kit python fastapi_target/migrate.py
 
 ```bash
 cd ../e4p-migration-poc
-uv run --project ../django-init python reconcile/reconcile.py
+uv run --project ../django-kit python reconcile/reconcile.py
 ```
 
 Expected output: `RESULT: ALL CHECKS PASS` with matching row counts and financial totals.
@@ -219,10 +219,10 @@ Run `make help` for the full list.
 
 ## Inspecting the Django admin
 
-The django-init POC registers admin classes for the slice.
+The django-kit POC registers admin classes for the slice.
 
 ```bash
-cd ../django-init
+cd ../django-kit
 
 # Promote an existing migrated user to superuser
 POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
@@ -292,13 +292,13 @@ If `5433`, `5434`, or `5435` are taken, edit `docker-compose.yml` to map differe
 Make sure both boilerplate environments are synced with uv:
 
 ```bash
-cd ../django-init && uv sync   # provides psycopg[binary] for reconcile.py
+cd ../django-kit && uv sync   # provides psycopg[binary] for reconcile.py
 cd ../fast-kit && uv sync      # provides asyncpg for fastapi_target/migrate.py
 ```
 
 ### Django migration complains about missing dependencies
 
-Make sure you are on the `poc/e4p-migration-comparison` branch in `django-init` and have run `uv sync`.
+Make sure you are on the `poc/e4p-migration-comparison` branch in `django-kit` and have run `uv sync`.
 
 ### FastAPI Alembic migration fails
 

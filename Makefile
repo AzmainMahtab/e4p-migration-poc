@@ -37,7 +37,7 @@ seed:
 	python legacy_source/generate_seed.py
 
 migrate-dj:
-	cd ../django-init && \
+	cd ../django-kit && \
 	POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
 	POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
 	uv run python backend/manage.py migrate && \
@@ -55,10 +55,10 @@ migrate-fa:
 
 reconcile:
 	cd ../e4p-migration-poc && \
-	uv run --project ../django-init python reconcile/reconcile.py
+	uv run --project ../django-kit python reconcile/reconcile.py
 
 admin-check:
-	cd ../django-init && \
+	cd ../django-kit && \
 	POSTGRES_DB=e4p_django POSTGRES_USER=e4p POSTGRES_PASSWORD=e4p \
 	POSTGRES_HOST=localhost POSTGRES_PORT=5434 \
 	uv run python backend/manage.py check
