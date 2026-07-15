@@ -4,14 +4,15 @@ help:
 	@echo "Elite4Print Migration Comparison Harness"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make up          - Start PostgreSQL databases"
-	@echo "  make down        - Stop PostgreSQL databases"
-	@echo "  make reset       - Destroy all data and start fresh"
-	@echo "  make seed        - Regenerate seed.sql"
-	@echo "  make migrate-dj  - Migrate the Django target"
-	@echo "  make migrate-fa  - Migrate the FastAPI target"
-	@echo "  make reconcile   - Run reconciliation checks"
-	@echo "  make admin-check - Verify Django admin registration"
+	@echo "  make up             - Start PostgreSQL databases"
+	@echo "  make down           - Stop PostgreSQL databases"
+	@echo "  make reset          - Destroy all data and start fresh"
+	@echo "  make restore-real   - Restore backups/e4p_dev_from_prod_real.dump into legacy_db"
+	@echo "  make seed           - Regenerate seed.sql (synthetic data)"
+	@echo "  make migrate-dj     - Migrate the Django target"
+	@echo "  make migrate-fa     - Migrate the FastAPI target"
+	@echo "  make reconcile      - Run reconciliation checks"
+	@echo "  make admin-check    - Verify Django admin registration"
 
 up:
 	docker compose up -d
@@ -21,6 +22,16 @@ down:
 
 reset:
 	docker compose down -v && docker compose up -d
+
+restore-real:
+	docker run --rm \
+		-e PGPASSWORD=e4p \
+		-v $(PWD)/backups:/backups \
+		--network host \
+		postgres:16-alpine \
+		pg_restore -h localhost -p 5433 -U e4p -d e4p_legacy \
+			--no-owner --no-acl --verbose \
+			/backups/e4p_dev_from_prod_real.dump
 
 seed:
 	python legacy_source/generate_seed.py

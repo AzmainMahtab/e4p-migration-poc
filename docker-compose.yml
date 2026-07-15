@@ -9,8 +9,8 @@ services:
       - "5433:5432"
     volumes:
       - legacy_pgdata:/var/lib/postgresql/data
-      - ./legacy_source/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
-      - ./legacy_source/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+      # For real-data runs, restore a .dump file with `make restore-real`.
+      # The legacy_source/schema.sql + seed.sql init is intentionally not mounted here.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U e4p -d e4p_legacy"]
       interval: 5s

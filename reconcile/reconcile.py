@@ -23,6 +23,11 @@ QUERIES = {
         "payments": ("SELECT COUNT(*) FROM payment_management_payment", "SELECT COUNT(*) FROM payment_payment", "SELECT COUNT(*) FROM payments"),
         "pending_refunds": ("SELECT COUNT(*) FROM payment_management_pendingrefund", "SELECT COUNT(*) FROM payment_pendingrefund", "SELECT COUNT(*) FROM pending_refunds"),
         "coupons": ("SELECT COUNT(*) FROM coupon_management_coupon", "SELECT COUNT(*) FROM promotion_coupon", "SELECT COUNT(*) FROM coupons"),
+        "coupon_products": (
+            "SELECT COUNT(*) FROM coupon_management_coupon_products",
+            "SELECT COUNT(*) FROM promotion_couponproduct",
+            "SELECT COUNT(*) FROM coupon_products",
+        ),
         "coupon_usages": ("SELECT COUNT(*) FROM coupon_management_couponusage", "SELECT COUNT(*) FROM promotion_couponusage", "SELECT COUNT(*) FROM coupon_usages"),
     },
     "financials": {
